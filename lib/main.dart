@@ -1,6 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import './models/game.dart';
 import './screens/game_screen.dart';
 import './screens/home_page.dart';
@@ -61,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.chart_bar),
-            label: 'Statistics',
+            label: 'Stats',
           ),
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.person),
@@ -70,16 +68,16 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       tabBuilder: (context, index) {
-        switch (index) {
-          case 0:
+            switch (index) {
+              case 0:
             return const HomePage();
-          case 1:
+              case 1:
             return const StatisticsPage();
-          case 2:
+              case 2:
             return const ProfilePage();
-          default:
+              default:
             return const HomePage();
-        }
+            }
       },
     );
   }

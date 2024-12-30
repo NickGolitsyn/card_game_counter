@@ -125,9 +125,8 @@ class _GameScreenState extends State<GameScreen> {
       _selectedTab = 0;
     });
     
-    // Save both as a draft and regular game
+    // Only save to draft storage while game is in progress
     _storageService.saveDraftGame(_game);
-    _storageService.saveGame(_game);
   }
 
   void _endGame() async {
@@ -294,129 +293,78 @@ class _GameScreenState extends State<GameScreen> {
       child: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              itemCount: _game.players.length + 1, // +1 for winner selection
-              itemBuilder: (context, index) {
-                if (index == _game.players.length) {
-                  // Winner selection row
+            child: ListView(
+              children: [
+                // Player score inputs
+                ..._game.players.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final player = entry.value;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           flex: 2,
                           child: Text(
-                            'Winner',
-                            style: TextStyle(
+                            player,
+                            style: const TextStyle(
                               fontSize: 17,
                             ),
                           ),
                         ),
                         Expanded(
-                          child: CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: CupertinoColors.systemGrey4,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _roundWinner ?? 'Select',
-                                style: TextStyle(
-                                  color: _roundWinner != null
-                                      ? CupertinoColors.black
-                                      : CupertinoColors.systemGrey,
-                                ),
-                              ),
-                            ),
-                            onPressed: () {
-                              showCupertinoModalPopup(
-                                context: context,
-                                builder: (context) => Container(
-                                  height: 200,
-                                  color: CupertinoColors.systemBackground,
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        height: 40,
-                                        decoration: const BoxDecoration(
-                                          border: Border(
-                                            bottom: BorderSide(
-                                              color: CupertinoColors.systemGrey4,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            CupertinoButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: () => Navigator.pop(context),
-                                            ),
-                                            CupertinoButton(
-                                              child: const Text('Done'),
-                                              onPressed: () => Navigator.pop(context),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: CupertinoPicker(
-                                          itemExtent: 32,
-                                          onSelectedItemChanged: (index) {
-                                            setState(() {
-                                              _roundWinner = _game.players[index];
-                                            });
-                                          },
-                                          children: _game.players
-                                              .map((player) => Text(player))
-                                              .toList(),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                          child: CupertinoTextField(
+                            controller: _newScoreControllers[index],
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            placeholder: 'Score',
                           ),
                         ),
                       ],
                     ),
                   );
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          _game.players[index],
-                          style: const TextStyle(
-                            fontSize: 17,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: CupertinoTextField(
-                          controller: _newScoreControllers[index],
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          placeholder: 'Score',
-                        ),
-                      ),
-                    ],
+                }).toList(),
+                
+                // Winner selection
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Round Winner',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                );
-              },
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _game.players.map((player) {
+                    final isSelected = _roundWinner == player;
+                    return CupertinoButton(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      color: isSelected ? CupertinoColors.activeBlue : null,
+                      child: Text(
+                        player,
+                        style: TextStyle(
+                          color: isSelected ? CupertinoColors.white : CupertinoColors.activeBlue,
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _roundWinner = player;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: CupertinoButton.filled(

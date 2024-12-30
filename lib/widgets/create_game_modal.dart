@@ -65,6 +65,7 @@ class _CreateGameModalState extends State<CreateGameModal> {
       roundWinners: [],
       createdAt: DateTime.now(),
       lastModified: DateTime.now(),
+      isDraftGame: true,
     );
 
     Navigator.pop(context); // Close modal

@@ -97,4 +97,9 @@ class StorageService {
     drafts.remove(gameId);
     await prefs.setString(_draftGamesKey, jsonEncode(drafts));
   }
+
+  Future<void> clearAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
 } 

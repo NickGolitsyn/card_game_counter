@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import '../models/player.dart';
+import '../services/storage_service.dart';
 import '../services/player_service.dart';
+import 'players_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -10,97 +11,33 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final StorageService _storageService = StorageService();
   final PlayerService _playerService = PlayerService();
-  final TextEditingController _newPlayerController = TextEditingController();
-  List<Player> _players = [];
+  int _playerCount = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadPlayers();
+    _loadPlayerCount();
   }
 
-  @override
-  void dispose() {
-    _newPlayerController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadPlayers() async {
+  Future<void> _loadPlayerCount() async {
     final players = await _playerService.getPlayers();
     setState(() {
-      _players = players;
+      _playerCount = players.length;
+      _isLoading = false;
     });
   }
 
-  void _showAddPlayerDialog() {
+  void _showClearDataConfirmation() {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Add New Player'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 16.0),
-          child: CupertinoTextField(
-            controller: _newPlayerController,
-            placeholder: 'Player Name',
-            autofocus: true,
-            onSubmitted: (_) => _addPlayer(),
-          ),
+        title: const Text('Clear All Data'),
+        content: const Text(
+          'This will permanently delete all players, games, and settings. This action cannot be undone.',
         ),
-        actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Cancel'),
-            onPressed: () {
-              _newPlayerController.clear();
-              Navigator.pop(context);
-            },
-          ),
-          CupertinoDialogAction(
-            child: const Text('Add'),
-            onPressed: _addPlayer,
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _addPlayer() async {
-    if (_newPlayerController.text.trim().isEmpty) {
-      return;
-    }
-
-    final success = await _playerService.addPlayer(_newPlayerController.text);
-    
-    if (mounted) {
-      if (!success) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Duplicate Player'),
-            content: const Text('A player with this name already exists.'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('OK'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
-      } else {
-        Navigator.pop(context);
-        _loadPlayers();
-      }
-    }
-    _newPlayerController.clear();
-  }
-
-  void _showDeleteConfirmation(Player player) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Delete Player'),
-        content: Text('Are you sure you want to delete ${player.displayName}?'),
         actions: [
           CupertinoDialogAction(
             isDestructiveAction: true,
@@ -108,14 +45,99 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: () => Navigator.pop(context),
           ),
           CupertinoDialogAction(
-            child: const Text('Delete'),
+            isDefaultAction: true,
+            child: const Text('Clear All'),
             onPressed: () async {
-              await _playerService.removePlayer(player.id);
+              await _storageService.clearAllData();
               if (mounted) {
                 Navigator.pop(context);
-                _loadPlayers();
+                _loadPlayerCount();
               }
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayersSection() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => const PlayersPage(),
+          ),
+        ).then((_) => _loadPlayerCount());
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemBackground,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: CupertinoColors.systemGrey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Players',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Icon(
+                    CupertinoIcons.chevron_right,
+                    color: CupertinoColors.systemGrey.withOpacity(0.5),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$_playerCount ${_playerCount == 1 ? 'player' : 'players'} registered',
+                style: const TextStyle(
+                  color: CupertinoColors.systemGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemBackground,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: CupertinoColors.systemGrey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          CupertinoListTile(
+            title: const Text('Clear All Data'),
+            trailing: const Icon(CupertinoIcons.delete),
+            onTap: _showClearDataConfirmation,
           ),
         ],
       ),
@@ -130,106 +152,15 @@ class _ProfilePageState extends State<ProfilePage> {
         middle: Text('Profile'),
       ),
       child: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: CupertinoColors.systemBackground,
-                border: Border(
-                  bottom: BorderSide(
-                    color: CupertinoColors.separator,
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: _isLoading
+            ? const Center(child: CupertinoActivityIndicator())
+            : ListView(
                 children: [
-                  const Text(
-                    'Players',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: _showAddPlayerDialog,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(CupertinoIcons.add_circled_solid),
-                        SizedBox(width: 4),
-                        Text('Add Player'),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 16),
+                  _buildPlayersSection(),
+                  _buildSettingsSection(),
                 ],
               ),
-            ),
-            if (_players.isEmpty)
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'No players added yet.\nTap the Add Player button to get started.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: CupertinoColors.systemGrey,
-                    ),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _players.length,
-                  itemBuilder: (context, index) {
-                    final player = _players[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemBackground,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: CupertinoColors.systemGrey.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: CupertinoListTile(
-                        title: Text(
-                          player.displayName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(
-                          player.name,
-                          style: const TextStyle(
-                            color: CupertinoColors.systemGrey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        trailing: CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          child: const Icon(
-                            CupertinoIcons.delete,
-                            color: CupertinoColors.destructiveRed,
-                          ),
-                          onPressed: () => _showDeleteConfirmation(player),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }

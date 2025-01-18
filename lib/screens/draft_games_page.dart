@@ -35,28 +35,10 @@ class _DraftGamesPageState extends State<DraftGamesPage> {
   }
 
   Future<void> _deleteDraft(String gameId) async {
-    final shouldDelete = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Delete Draft'),
-        content: const Text('Are you sure you want to delete this draft? This action cannot be undone.'),
-        actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          CupertinoDialogAction(
-            child: const Text('Delete'),
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
-    ) ?? false;
-
-    if (shouldDelete) {
-      await _storageService.deleteDraftGame(gameId);
-      _loadDraftGames();
+    await _storageService.deleteDraftGame(gameId);
+    _loadDraftGames();
+    if (mounted) {
+      Navigator.of(context).pop('draft_updated');
     }
   }
 
@@ -64,7 +46,7 @@ class _DraftGamesPageState extends State<DraftGamesPage> {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
-        middle: Text('Unfinished Games'),
+        middle: Text('Draft Games'),
       ),
       child: SafeArea(
         child: _isLoading
@@ -72,8 +54,10 @@ class _DraftGamesPageState extends State<DraftGamesPage> {
             : _draftGames.isEmpty
                 ? const Center(
                     child: Text(
-                      'No unfinished games',
-                      style: TextStyle(color: CupertinoColors.systemGrey),
+                      'No draft games',
+                      style: TextStyle(
+                        color: CupertinoColors.systemGrey,
+                      ),
                     ),
                   )
                 : ListView.builder(
@@ -98,12 +82,15 @@ class _DraftGamesPageState extends State<DraftGamesPage> {
                         ),
                         onDismissed: (_) => _deleteDraft(game.id),
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(
+                          onTap: () async {
+                            final result = await Navigator.pushNamed(
                               context,
                               '/game',
                               arguments: game,
                             );
+                            if (result == 'draft_updated') {
+                              _loadDraftGames();
+                            }
                           },
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),

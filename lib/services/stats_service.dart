@@ -43,7 +43,7 @@ class GameSummary {
 class StatsService {
   final StorageService _storageService = StorageService();
 
-  Future<List<PlayerStats>> getPlayerStats() async {
+  Future<List<PlayerStats>> getPlayerStats(String gameType) async {
     final games = await _storageService.getGames();
     final Map<String, List<int>> playerScores = {};
     final Map<String, int> gamesWon = {};
@@ -51,8 +51,8 @@ class StatsService {
     
     // Collect all scores for each player
     for (final game in games) {
-      // Skip draft games, games with no scores, and incomplete games
-      if (game.isDraftGame || game.scores.isEmpty) continue;
+      // Skip draft games, games with no scores, and games of different type
+      if (game.isDraftGame || game.scores.isEmpty || game.type != gameType) continue;
 
       // Find winner by highest total score
       int maxScore = -1;
@@ -102,11 +102,11 @@ class StatsService {
       ..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
   }
 
-  Future<List<GameSummary>> getGameSummaries() async {
+  Future<List<GameSummary>> getGameSummaries(String gameType) async {
     final games = await _storageService.getGames();
     
     return games
-        .where((game) => !game.isDraftGame && game.scores.isNotEmpty)
+        .where((game) => !game.isDraftGame && game.scores.isNotEmpty && game.type == gameType)
         .map((game) {
       // Find winner and winning score
       int maxScore = -1;

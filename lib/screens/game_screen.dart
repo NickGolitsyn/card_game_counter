@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/game.dart';
 import '../services/storage_service.dart';
+import '../widgets/pill_tab_selector.dart';
 
 class GameScreen extends StatefulWidget {
   final Game game;
@@ -58,7 +59,10 @@ class _GameScreenState extends State<GameScreen> {
               // Delete from both storages
               await _storageService.deleteDraftGame(widget.game.id);
               await _storageService.deleteGame(widget.game.id);
-              if (mounted) Navigator.pop(context, false);
+              if (mounted) {
+                Navigator.pop(context, false);
+                Navigator.of(context).pop('draft_updated');
+              }
             },
           ),
           CupertinoDialogAction(
@@ -71,10 +75,12 @@ class _GameScreenState extends State<GameScreen> {
 
     if (result ?? false) {
       await _storageService.saveDraftGame(_game);
+      Navigator.of(context).pop('draft_updated');
     } else {
       // Delete from both storages when discarding
       await _storageService.deleteDraftGame(widget.game.id);
       await _storageService.deleteGame(widget.game.id);
+      Navigator.of(context).pop('draft_updated');
     }
 
     return true;
@@ -154,7 +160,9 @@ class _GameScreenState extends State<GameScreen> {
       final completedGame = _game.copyWith(isDraftGame: false);
       await _storageService.saveGame(completedGame);
       await _storageService.deleteDraftGame(_game.id);
-      Navigator.of(context).pop();
+      
+      // Return to home with draft_updated result
+      Navigator.of(context).pop('draft_updated');
     }
   }
 
@@ -487,28 +495,15 @@ class _GameScreenState extends State<GameScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: CupertinoSegmentedControl<int>(
-                  children: const {
-                    0: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text('Scores'),
-                    ),
-                    1: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text('Add'),
-                    ),
-                    2: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text('Stats'),
-                    ),
-                  },
-                  onValueChanged: (index) {
+                padding: const EdgeInsets.fromLTRB(32, 16, 32, 0),
+                child: PillTabSelector(
+                  options: const ['Scores', 'Add', 'Stats'],
+                  selectedOption: ['Scores', 'Add', 'Stats'][_selectedTab],
+                  onOptionSelected: (option) {
                     setState(() {
-                      _selectedTab = index;
+                      _selectedTab = ['Scores', 'Add', 'Stats'].indexOf(option);
                     });
                   },
-                  groupValue: _selectedTab,
                 ),
               ),
               const SizedBox(height: 16),

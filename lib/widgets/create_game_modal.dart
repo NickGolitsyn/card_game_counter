@@ -5,7 +5,12 @@ import '../models/player.dart';
 import '../services/player_service.dart';
 
 class CreateGameModal extends StatefulWidget {
-  const CreateGameModal({super.key});
+  final String gameType;
+  
+  const CreateGameModal({
+    super.key,
+    required this.gameType,
+  });
 
   @override
   State<CreateGameModal> createState() => _CreateGameModalState();
@@ -16,7 +21,6 @@ class _CreateGameModalState extends State<CreateGameModal> {
   final PlayerService _playerService = PlayerService();
   List<Player> _availablePlayers = [];
   List<Player> _selectedPlayers = [];
-  String _selectedGameType = 'Racing Demons';
   static const int maxPlayers = 10;
 
   @override
@@ -59,7 +63,7 @@ class _CreateGameModalState extends State<CreateGameModal> {
     final game = Game(
       id: const Uuid().v4(),
       title: _titleController.text,
-      type: _selectedGameType,
+      type: widget.gameType,
       players: _selectedPlayers.map((p) => p.displayName).toList(),
       scores: [],
       roundWinners: [],
@@ -123,9 +127,9 @@ class _CreateGameModalState extends State<CreateGameModal> {
                   child: const Text('Cancel'),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Text(
-                  'New Game',
-                  style: TextStyle(
+                Text(
+                  'New ${widget.gameType} Game',
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
@@ -145,28 +149,6 @@ class _CreateGameModalState extends State<CreateGameModal> {
                 CupertinoTextField(
                   controller: _titleController,
                   placeholder: 'Game Title',
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.systemGrey6,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: CupertinoSlidingSegmentedControl<String>(
-                    groupValue: _selectedGameType,
-                    children: const {
-                      'Racing Demons': Text('Racing Demons'),
-                      '500': Text('500'),
-                    },
-                    onValueChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedGameType = value;
-                        });
-                      }
-                    },
-                  ),
                 ),
                 const SizedBox(height: 24),
                 const Row(

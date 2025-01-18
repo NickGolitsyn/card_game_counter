@@ -36,66 +36,65 @@ class _HomePageState extends State<HomePage> {
   Widget _buildDraftGamesSection() {
     if (_draftGames.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(context, '/drafts');
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemBackground,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: CupertinoColors.systemGrey.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.pushNamed(context, '/drafts');
+        if (result == 'draft_updated') {
+          _loadDraftGames();
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemBackground,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: CupertinoColors.systemGrey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
               children: [
-                Row(
+                const Icon(
+                  CupertinoIcons.doc_text,
+                  color: CupertinoColors.systemIndigo,
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      CupertinoIcons.doc_text,
-                      color: CupertinoColors.systemIndigo,
+                    const Text(
+                      'Unfinished Games',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Unfinished Games',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '${_draftGames.length} ${_draftGames.length == 1 ? 'game' : 'games'} in progress',
-                          style: const TextStyle(
-                            color: CupertinoColors.systemGrey,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      '${_draftGames.length} ${_draftGames.length == 1 ? 'game' : 'games'} in progress',
+                      style: const TextStyle(
+                        color: CupertinoColors.systemGrey,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
-                const Icon(
-                  CupertinoIcons.chevron_right,
-                  color: CupertinoColors.systemGrey,
-                ),
               ],
             ),
-          ),
+            const Icon(
+              CupertinoIcons.chevron_right,
+              color: CupertinoColors.systemGrey,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -108,18 +107,107 @@ class _HomePageState extends State<HomePage> {
             : Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDraftGamesSection(),
-                    CupertinoButton.filled(
-                      onPressed: () {
-                        showCupertinoModalPopup(
-                          context: context,
-                          builder: (context) => const CreateGameModal(),
-                        );
-                      },
-                      child: const Text('Create New Game'),
+                    const Text(
+                      'Start a New Game',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await showCupertinoModalPopup(
+                          context: context,
+                          builder: (context) => const CreateGameModal(gameType: 'Racing Demons'),
+                        );
+                        if (result == 'draft_updated') {
+                          _loadDraftGames();
+                        }
+                      },
+                      child: Container(
+                        height: 120,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemIndigo,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: CupertinoColors.systemGrey.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 24),
+                            Icon(
+                              CupertinoIcons.suit_spade_fill,
+                              size: 48,
+                              color: CupertinoColors.white,
+                            ),
+                            const SizedBox(width: 24),
+                            const Text(
+                              'Racing Demons',
+                              style: TextStyle(
+                                color: CupertinoColors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await showCupertinoModalPopup(
+                          context: context,
+                          builder: (context) => const CreateGameModal(gameType: '500'),
+                        );
+                        if (result == 'draft_updated') {
+                          _loadDraftGames();
+                        }
+                      },
+                      child: Container(
+                        height: 120,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemPink,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: CupertinoColors.systemGrey.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 24),
+                            Icon(
+                              CupertinoIcons.suit_heart_fill,
+                              size: 48,
+                              color: CupertinoColors.white,
+                            ),
+                            const SizedBox(width: 24),
+                            const Text(
+                              '500',
+                              style: TextStyle(
+                                color: CupertinoColors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    _buildDraftGamesSection(),
                   ],
                 ),
               ),

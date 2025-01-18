@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 import '../services/stats_service.dart';
 import '../services/storage_service.dart';
+import '../widgets/pill_tab_selector.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
@@ -17,6 +18,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
   List<PlayerStats> _playerStats = [];
   List<GameSummary> _gameSummaries = [];
   bool _isLoading = true;
+  String _selectedGameType = 'Racing Demons';
+  final List<String> _gameTypes = ['Racing Demons', '500'];
 
   @override
   void initState() {
@@ -29,14 +32,21 @@ class _StatisticsPageState extends State<StatisticsPage> {
       _isLoading = true;
     });
 
-    final playerStats = await _statsService.getPlayerStats();
-    final gameSummaries = await _statsService.getGameSummaries();
+    final playerStats = await _statsService.getPlayerStats(_selectedGameType);
+    final gameSummaries = await _statsService.getGameSummaries(_selectedGameType);
 
     setState(() {
       _playerStats = playerStats;
       _gameSummaries = gameSummaries;
       _isLoading = false;
     });
+  }
+
+  void _onGameTypeChanged(String gameType) {
+    setState(() {
+      _selectedGameType = gameType;
+    });
+    _loadStats();
   }
 
   Widget _buildPlayerStatsSection() {
@@ -352,6 +362,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: PillTabSelector(
+                        options: _gameTypes,
+                        selectedOption: _selectedGameType,
+                        onOptionSelected: _onGameTypeChanged,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     const Text(
                       'Player Stats',
                       style: TextStyle(

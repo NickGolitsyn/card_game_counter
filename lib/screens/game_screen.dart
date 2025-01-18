@@ -56,13 +56,7 @@ class _GameScreenState extends State<GameScreen> {
             isDestructiveAction: true,
             child: const Text('Discard'),
             onPressed: () async {
-              // Delete from both storages
-              await _storageService.deleteDraftGame(widget.game.id);
-              await _storageService.deleteGame(widget.game.id);
-              if (mounted) {
-                Navigator.pop(context, false);
-                Navigator.of(context).pop('draft_updated');
-              }
+              Navigator.pop(context, false);
             },
           ),
           CupertinoDialogAction(
@@ -74,16 +68,23 @@ class _GameScreenState extends State<GameScreen> {
     );
 
     if (result ?? false) {
+      // Save as draft
       await _storageService.saveDraftGame(_game);
-      Navigator.of(context).pop('draft_updated');
-    } else {
-      // Delete from both storages when discarding
+      if (mounted) {
+        Navigator.of(context).pop('draft_updated');
+      }
+      return false; // We handled the navigation
+    } else if (result == false) {
+      // Discard game
       await _storageService.deleteDraftGame(widget.game.id);
       await _storageService.deleteGame(widget.game.id);
-      Navigator.of(context).pop('draft_updated');
+      if (mounted) {
+        Navigator.of(context).pop('draft_updated');
+      }
+      return false; // We handled the navigation
     }
 
-    return true;
+    return true; // Only return true if the dialog was dismissed
   }
 
   bool _hasUnsavedChanges() {
@@ -391,10 +392,8 @@ class _GameScreenState extends State<GameScreen> {
       final scores = _game.scores.map((round) => round[index]).toList();
       final total = scores.fold<int>(0, (sum, score) => sum + score);
       final average = scores.isEmpty ? 0.0 : total / scores.length;
-      final roundsWon = _game.scores.where((round) {
-        final maxScore = round.reduce((a, b) => a > b ? a : b);
-        return round[index] == maxScore;
-      }).length;
+      // Count rounds won based on selected winners
+      final roundsWon = _game.roundWinners.where((winner) => winner == _game.players[index]).length;
 
       return {
         'name': _game.players[index],
